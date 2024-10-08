@@ -272,7 +272,7 @@ def pdf_to_page_extraction(file_data):
 
 # Gimini API Call
 import google.generativeai as genai
-API_KEY="AIzaSyDnL3F7x_xh-BYsx_144N06FHBKhDTFCCc"
+API_KEY="Gemini API Key"
 genai.configure(api_key= API_KEY)
 
 def image_to_text_with_gimini(image_data):
