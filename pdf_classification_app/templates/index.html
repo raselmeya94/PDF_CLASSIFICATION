@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link rel="stylesheet" href="static/style.css">
+
+    <title>pdf classify</title>
+</head>
+<body>
+<header>
+    <div class="logo-container">
+        <a href="/" class="link-logo">
+            <div class="logo">
+                <img src="{% static 'image/img1.png' %}" alt="Download Image">
+            </div>
+            <div class="company-name">PDF Classification</div>
+        </a>
+    </div>
+    <nav>
+        <ul >
+            <li><a href="/">Home</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+    </nav>
+</header>
+<h1 style="color: #40b49c; padding: 10px;">PDF Classify & Information Extraction</h1>
+
+    <div class="form-container">
+       <form id="upload-form" method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="container">
+             <div class="card">
+                <h3>Upload Files</h3>
+                <div class="drop_box">
+                   <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px;">
+                      <img src="{% static 'image/cloud-computing.png' %}" alt="Upload Icon" class="img">
+                   </div>
+                   <input type="file" hidden accept=".pdf" id="fileID" style="display:none;">
+                   {{ form.as_p }}
+                </div>
+                <button type="submit" class="upload-button">Upload</button>
+             </div>
+          </div>
+       </form>
+    </div>
+
+    {% if data %}
+    <div class="df">
+        <table id="file-table">
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>File Size (KB)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                    <tr>
+                        <td>{{ item.filename }}</td>
+                        <td>{{ item.file_size }}</td>
+                        <td>
+                            <button class="preview-button" type="button" onclick="previewFile('{{ item.filename }}')">Preview</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="modal" id="preview-modal">
+        <div class="modal-content">
+            <button class="close-button" onclick="closePreview()">&times;</button>
+            <div class="preview-container" id="preview-section">
+                <div class="left-preview">
+                    <h2 style="text-align: center; padding-bottom: 7px;">Uploaded File</h2>
+                    <div id="left-preview" class="left-preview-pdf"></div>
+                </div>
+
+                <div class="right-preview">
+                    <h2 style="text-align: center;padding-bottom:7px">Extracted Text</h2>
+                    <div id="right-preview" ></div>
+                    <pre></pre>
+                </div>
+            </div>
+            <button type="button" class="showMoreInfo" onclick="showMoreInfo()">Show More Info</button>
+        </div>
+    </div>
+    {% endif %}
+
+    <div id="more-info-modal" class="more-info-modal">
+        <div class="more-info-content">
+            <button class="close-more-info" onclick="closeMoreInfo()">&times;</button>
+            <h2 class="pdf-info"><b>Classified PDF Information</b></h2>
+            <div id="more-info-section"></div>
+        </div>
+    </div>
+    <script>
+        const new_data = {{ data|safe }};
+        let data = {};
+        new_data.forEach(entry => {
+            let filename = entry.filename;
+            let key = filename.split('.')[0];
+            data[key] = entry;
+        });
+        var pre_filename='';
+        function previewFile(filename) {
+            pre_filename=filename.split('.')[0];
+            const item = data[pre_filename];
+            const leftPreview = document.getElementById('left-preview');
+            const rightPreview = document.getElementById('right-preview');
+
+            let fileData = item.uploaded_file_data;
+            let fileType = item.file_type;
+
+            if (fileType.startsWith('image')) {
+                leftPreview.innerHTML = `<img src="data:${fileType};base64,${fileData}" alt="Uploaded Image">`;
+            } else if (fileType === 'pdf') {
+                leftPreview.innerHTML = `
+                    <iframe src="data:application/pdf;base64,${fileData}" type="application/pdf" frameborder="0"></iframe>
+                `;
+            } else {
+                leftPreview.innerHTML = `<p>Unsupported file type: ${fileType}</p>`;
+            }
+            rightPreview.innerHTML = `<pre>${item.extracted_text}</pre>`;
+
+            document.getElementById('preview-modal').style.display = 'flex';
+        }
+
+        function closePreview() {
+            document.getElementById('preview-modal').style.display = 'none';
+        }
+
+        function showMoreInfo() {
+
+            const moreInfoSection = document.getElementById('more-info-section');
+
+            const item = data[pre_filename];
+            moreInfoSection.innerHTML = item.df_html;
+
+
+            // Apply custom styles to the dynamically loaded table
+            const table = moreInfoSection.querySelector('table');
+            if (table) {
+                // Customize table styles
+                table.style.width = '100%';
+                table.style.borderCollapse = 'collapse';
+                const cells = table.querySelectorAll('th, td');
+                cells.forEach(cell => {
+                    cell.style.padding = '8px';
+                    cell.style.textAlign = 'center';
+                    cell.style.border = '1px solid #ddd';
+                });
+                table.style.backgroundColor = '#f2f2f2';
+            }
+
+            // Show the modal or section containing the table
+            const modal = document.getElementById('more-info-modal');
+            modal.style.display = 'flex';
+        }
+
+        function closeMoreInfo() {
+            document.getElementById('more-info-modal').style.display = 'none';
+        }
+
+
+
+    </script>
+  <footer>
+        &copy; 2024 Tappware Solution Limited. All rights reserved.
+    </footer>
+</body>
+</html>
